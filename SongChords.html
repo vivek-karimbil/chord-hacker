@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chord Builder Pro</title>
+    <style>
+        :root { --bg: #f4f7f6; --primary: #2196F3; --secondary: #4CAF50; --accent: #ff9800; --text: #333; }
+        body { font-family: system-ui, sans-serif; margin: 0; background: var(--bg); color: var(--text); display: flex; flex-direction: column; align-items: center; }
+        header { width: 100%; display: flex; justify-content: space-between; padding: 15px 20px; background: white; box-sizing: border-box; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        #app-container { display: flex; flex-wrap: wrap; padding: 10px; gap: 20px; justify-content: center; max-width: 1300px; width: 100%; box-sizing: border-box; }
+        
+        .main-view { width: 100%; max-width: 420px; }
+        .chord-svg-container { background: white; padding: 10px; border-radius: 12px; box-shadow: 0 8px 20px rgba(0,0,0,0.06); display: flex; flex-direction: column; align-items: center; margin-bottom: 20px; }
+        
+        .controls { display: flex; flex-direction: column; gap: 12px; }
+        .selection-group { background: white; padding: 12px; border-radius: 8px; border: 1px solid #ddd; }
+        h3 { margin: 0 0 10px 0; font-size: 0.75rem; color: #777; text-transform: uppercase; letter-spacing: 1px; }
+        .root-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; }
+        .option-btn { padding: 12px 2px; border: 1px solid #eee; background: #fff; border-radius: 6px; font-size: 0.85rem; text-align: center; cursor: pointer; }
+        .option-btn.selected { background: var(--primary); color: white; border-color: var(--primary); font-weight: bold; }
+        
+        /* Title Bar UI */
+        .title-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 15px; border-bottom: 2px solid var(--primary); }
+        #song-title-input { flex: 1; padding: 10px 0; font-size: 1.5rem; font-weight: bold; border: none; outline: none; background: transparent; }
+        .new-song-btn { background: #e0e0e0; border: none; width: 32px; height: 32px; border-radius: 50%; cursor: pointer; font-size: 1.2rem; display: flex; align-items: center; justify-content: center; color: #666; transition: 0.2s; }
+        .new-song-btn:hover { background: var(--primary); color: white; }
+
+        .songbook-section { width: 100%; max-width: 520px; background: #fff; padding: 20px; border-radius: 12px; border: 1px solid #ddd; box-sizing: border-box; }
+        .section-block { border: 1px solid #e0e0e0; border-radius: 8px; padding: 12px; margin-bottom: 15px; background: #fafafa; }
+        .section-block.active { border: 2px solid var(--primary); background: #f0f7ff; }
+        .section-header { display: flex; gap: 8px; margin-bottom: 10px; align-items: center; }
+        .section-title { flex: 1; border: none; background: #eee; padding: 5px 10px; border-radius: 4px; font-weight: bold; font-size: 0.95rem; outline: none; }
+        
+        .chord-list { display: flex; flex-wrap: wrap; gap: 8px; min-height: 40px; }
+        .song-item { display: flex; align-items: center; padding: 8px 12px; background: #e3f2fd; color: #1976d2; border-radius: 6px; font-size: 0.9rem; font-weight: bold; border: 1px solid #bbdefb; cursor: pointer; }
+        .song-item.editing { border: 2px solid var(--accent); background: #fff3e0; color: #e65100; }
+        .chord-del { margin-left: 8px; color: #ff5252; font-size: 1.2rem; }
+
+        .action-btn { width: 100%; padding: 14px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        .add-btn { background: var(--secondary); color: white; }
+        .update-btn { background: var(--accent); color: white; display: none; }
+        .export-btn { background: #455A64; color: white; }
+        .new-sec-btn { background: #9c27b0; color: white; }
+        .mini-btn { padding: 6px 10px; font-size: 0.75rem; cursor: pointer; border-radius: 4px; border: 1px solid #ccc; background: white; }
+
+        .library-drawer { margin-top: 25px; border-top: 2px dashed #ccc; padding-top: 15px; }
+        .library-drawer h4 { margin: 0 0 10px 0; font-size: 0.8rem; color: #666; text-transform: uppercase; }
+        #saved-songs-list { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; max-height: 150px; overflow-y: auto; padding: 5px; }
+        .saved-item { font-size: 0.8rem; background: #eee; padding: 8px; border-radius: 6px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; border: 1px solid #ddd; }
+        .saved-item:hover { background: #e3f2fd; border-color: var(--primary); }
+        .del-saved { color: #ff5252; font-weight: bold; font-size: 1rem; padding: 0 5px; }
+    </style>
+</head>
+<body>
+
+<header>
+    <h2 style="margin:0;">Chord Pro</h2>
+    <div style="font-size: 0.8rem; color: #888;">Personal Songbook Editor</div>
+</header>
+
+<div id="app-container">
+    <div class="main-view">
+        <div class="chord-svg-container">
+            <svg id="chord-svg" width="180" height="240" viewBox="0 0 160 220">
+                <text id="note-display" x="80" y="30" fill="black" font-size="28" font-weight="bold" text-anchor="middle">C</text>
+                <text id="firstfret-display" x="5" y="105" fill="#f44336" font-size="16" font-weight="bold"></text>
+                <g stroke="#444" stroke-width="1">
+                    <line x1="30" y1="80" x2="130" y2="80" stroke-width="4"/>
+                    <line x1="30" y1="110" x2="130" y2="110"/><line x1="30" y1="140" x2="130" y2="140"/><line x1="30" y1="170" x2="130" y2="170"/><line x1="30" y1="200" x2="130" y2="200"/>
+                    <line x1="30" y1="80" x2="30" y2="200"/><line x1="50" y1="80" x2="50" y2="200"/><line x1="70" y1="80" x2="70" y2="200"/><line x1="90" y1="80" x2="90" y2="200"/><line x1="110" y1="80" x2="110" y2="200"/><line x1="130" y1="80" x2="130" y2="200"/>
+                </g>
+                <g id="markers" font-family="sans-serif" font-size="14"></g><g id="dots"></g>
+            </svg>
+        </div>
+
+        <div class="controls">
+            <div class="selection-group">
+                <h3>Root</h3>
+                <div class="root-grid" id="root-row">
+                    <div class="option-btn" data-value="Ab">Ab</div><div class="option-btn" data-value="A">A</div><div class="option-btn" data-value="Bb">Bb</div><div class="option-btn" data-value="B">B</div><div class="option-btn selected" data-value="C">C</div><div class="option-btn" data-value="C#">C#</div>
+                    <div class="option-btn" data-value="D">D</div><div class="option-btn" data-value="Eb">Eb</div><div class="option-btn" data-value="E">E</div><div class="option-btn" data-value="F">F</div><div class="option-btn" data-value="F#">F#</div><div class="option-btn" data-value="G">G</div>
+                </div>
+            </div>
+            <div class="selection-group">
+                <h3>Quality</h3>
+                <div class="root-grid" id="variant-row">
+                    <div class="option-btn selected" data-value="naturals">Maj</div><div class="option-btn" data-value="minors">min</div><div class="option-btn" data-value="sevenths">7</div><div class="option-btn" data-value="minorseventh">m7</div><div class="option-btn" data-value="majorseventh">Maj7</div><div class="option-btn" data-value="suspended">sus</div>
+                </div>
+            </div>
+            <button id="add-btn" class="action-btn add-btn" onclick="addToActiveSection()">Add to Selected Section</button>
+            <button id="update-btn" class="action-btn update-btn" onclick="updateChord()">Update Selected Chord</button>
+            <button id="cancel-btn" class="action-btn" style="display:none; background:#ccc;" onclick="cancelEdit()">Cancel Edit</button>
+        </div>
+    </div>
+
+    <div class="songbook-section">
+        <div class="title-bar">
+            <input type="text" id="song-title-input" value="My Song">
+            <button class="new-song-btn" onclick="clearCurrent()" title="New Song">⊕</button>
+        </div>
+        
+        <div id="sections-container"></div>
+        <button class="action-btn new-sec-btn" onclick="autoAddNextSection()">+ Add Next Section</button>
+        <button class="action-btn export-btn" onclick="exportGroupedSong()">Export Responsive Sheet</button>
+        
+        <div class="library-drawer">
+            <h4>Song Library</h4>
+            <button class="action-btn" onclick="saveSong()" style="background: var(--secondary); color: white; margin-bottom: 15px;">Save Current to Library</button>
+            <div id="saved-songs-list"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // [Chords data and suffix map remain identical to previous version]
+    const chords = {
+        naturals: [{note: "Ab", frets: [ 1, 3, 3, 2, 1, 1], firstfret: "4"},{note: "A", frets: [ -1, 0, 2, 2, 2, 0]},{note: "Bb", frets: [ -1, 1, 3, 3, 3, 1]},{note: "B", frets: [ -1, 2, 4, 4, 4, 2]},{note: "C", frets: [ 3, 3, 2, 0, 1, 0]},{note: "C#", frets: [ -1, -1, 3, 1, 2, 1]},{note: "D", frets: [ -1, -1, 0, 2, 3, 2]},{note: "Eb", frets: [ 0, 0, 3, 1, 2, 1], firstfret: "3"},{note: "E", frets: [ 0, 2, 2, 1, 0, 0]},{note: "F", frets: [ 1, 3, 3, 2, 1, 1]},{note: "F#", frets: [ 2, 4, 4, 3, 2, 2]},{note: "G", frets: [ 3, 2, 0, 0, 0, 3]}],
+        minors: [{note: "Abm", frets: [ 1, 3, 3, 1, 1, 1], firstfret: "4"},{note: "Am", frets: [ -1, 0, 2, 2, 1, 0]},{note: "Bbm", frets: [ -1, 1, 3, 3, 2, 1]},{note: "Bm", frets: [ -1, 2, 4, 4, 3, 2]},{note: "Cm", frets: [ -1, 1, 3, 3, 2, 1], firstfret: "3"},{note: "C#m", frets: [ -1, -1, 2, 1, 2, 0]},{note: "Dm", frets: [ -1, -1, 0, 2, 3, 1]},{note: "Ebm", frets: [ -1, -1, 4, 3, 4, 2]},{note: "Em", frets: [ 0, 2, 2, 0, 0, 0]},{note: "Fm", frets: [ 1, 3, 3, 1, 1, 1]},{note: "F#m", frets: [ 2, 4, 4, 2, 2, 2]},{note: "Gm", frets: [ 1, 3, 3, 1, 1, 1], firstfret: "3"}],
+        sevenths: [{note: "Ab7", frets: [ -1, -1, 1, 1, 1, 2]},{note: "A7", frets: [ -1, 0, 2, 2, 2, 3]},{note: "Bb7", frets: [ -1, -1, 1, 1, 1, 2], firstfret: "3"},{note: "B7", frets: [ -1, 2, 1, 2, 0, 2]},{note: "C7", frets: [ -1, 3, 2, 3, 1, 0]},{note: "C#7", frets: [ -1, -1, 3, 4, 2, 4]},{note: "D7", frets: [ -1, -1, 0, 2, 1, 2]},{note: "Eb7", frets: [ -1, -1, 1, 3, 2, 3]},{note: "E7", frets: [ 0, 2, 2, 1, 3, 0]},{note: "F7", frets: [ 1, 3, 1, 2, 1, 1]},{note: "F#7", frets: [ -1, -1, 4, 3, 2, 0]},{note: "G7", frets: [ 3, 2, 0, 0, 0, 1]}],
+        minorseventh: [{note: "Abm7", frets: [ -1, -1, 1, 1, 0, 2]},{note: "Am7", frets: [ -1, 0, 2, 2, 1, 3]},{note: "Bbm7", frets: [ -1, -1, 3, 3, 2, 4]},{note: "Bm7", frets: [ -1, 1, 3, 1, 2, 1], firstfret: 2},{note: "Cm7", frets: [ -1, -1, 1, 3, 1, 3]},{note: "C#m7", frets: [ -1, -1, 2, 4, 2, 4]},{note: "Dm7", frets: [ -1, -1, 0, 2, 1, 1]},{note: "Ebm7", frets: [ -1, -1, 1, 3, 2, 2]},{note: "Em7", frets: [ 0, 2, 0, 0, 0, 0]},{note: "Fm7", frets: [ 1, 3, 1, 1, 1, 1]},{note: "F#m7", frets: [ -1, -1, 2, 2, 2, 2]},{note: "Gm7", frets: [ 1, 3, 1, 1, 1, 1], firstfret: 3}],
+        majorseventh: [{note: "AbMaj7", frets: [ -1, -1, 1, 1, 1, 3]},{note: "AMaj7", frets: [ -1, 0, 2, 1, 2, 0]},{note: "BbMaj7", frets: [ -1, 1, 3, 2, 3, -1]},{note: "BMaj7", frets: [ -1, 2, 4, 3, 4, -1]},{note: "CMaj7", frets: [ -1, 3, 2, 0, 0, 0]},{note: "C#Maj7", frets: [ -1, 4, 3, 1, 1, 1]},{note: "DMaj7", frets: [ -1, -1, 0, 2, 2, 2]},{note: "EbMaj7", frets: [ -1, -1, 1, 3, 3, 3]},{note: "EMaj7", frets: [ 0, 2, 1, 1, 0, 0]},{note: "FMaj7", frets: [ -1, -1, 3, 2, 1, 0]},{note: "F#Maj7", frets: [ -1, -1, 4, 3, 2, 1]},{note: "GMaj7", frets: [ -1, -1, 4, 3, 2, 1], firstfret: 2}],
+        suspended: [{note: "Absus", frets: [ -1, -1, 1, 1, 2, 4]},{note: "Asus", frets: [ -1, 0, 2, 2, 3, 0]},{note: "Bbsus", frets: [ -1, -1, 3, 3, 4, 1]},{note: "Bsus", frets: [ -1, -1, 3, 3, 4, 1], firstfret: "2"},{note: "Csus", frets: [ -1, -1, 3, 0, 1, 3]},{note: "C#sus", frets: [ -1, -1, 3, 3, 4, 1]},{note: "Dsus", frets: [ -1, -1, 0, 2, 3, 3]},{note: "Ebsus", frets: [ -1, -1, 1, 3, 4, 4]},{note: "Esus", frets: [ 0, 2, 2, 2, 0, 0]},{note: "Fsus", frets: [ -1, -1, 3, 3, 1, 1]},{note: "F#sus", frets: [ -1, -1, 4, 4, 2, 2]},{note: "Gsus", frets: [ -1, -1, 0, 0, 1, 3]}]
+    };
+    const suffixMap = { naturals:'', minors:'m', sevenths:'7', minorseventh:'m7', majorseventh:'Maj7', suspended:'sus' };
+
+    let songData = [];
+    let activeSectionId = null;
+    let editingChordPath = null;
+
+    // --- LIBRARY & CLEAR LOGIC ---
+    function clearCurrent() {
+        if(confirm("Discard current song and start new?")) {
+            songData = [];
+            document.getElementById('song-title-input').value = "New Song";
+            autoAddNextSection();
+        }
+    }
+
+    function saveSong() {
+        const title = document.getElementById('song-title-input').value.trim() || "Untitled Song";
+        const pkg = { title, data: songData };
+        localStorage.setItem('chordSong_' + title, JSON.stringify(pkg));
+        renderLibrary();
+    }
+
+    function loadSong(title) {
+        const saved = localStorage.getItem('chordSong_' + title);
+        if (saved) {
+            const pkg = JSON.parse(saved);
+            document.getElementById('song-title-input').value = pkg.title;
+            songData = pkg.data;
+            if (songData.length > 0) activeSectionId = songData[0].id;
+            renderSections();
+        }
+    }
+
+    function deleteSaved(title, e) {
+        e.stopPropagation();
+        if(confirm('Delete ' + title + '?')) {
+            localStorage.removeItem('chordSong_' + title);
+            renderLibrary();
+        }
+    }
+
+    function renderLibrary() {
+        const list = document.getElementById('saved-songs-list');
+        list.innerHTML = "";
+        Object.keys(localStorage).forEach(key => {
+            if (key.startsWith('chordSong_')) {
+                const title = key.replace('chordSong_', '');
+                const div = document.createElement('div');
+                div.className = 'saved-item';
+                div.innerHTML = `<span>${title}</span><span class="del-saved" onclick="deleteSaved('${title}', event)">×</span>`;
+                div.onclick = () => loadSong(title);
+                list.appendChild(div);
+            }
+        });
+    }
+
+    // --- CORE RENDERING ---
+    function drawChord(chordObj) {
+        if(!chordObj) return;
+        document.getElementById("note-display").textContent = chordObj.note;
+        document.getElementById("firstfret-display").textContent = chordObj.firstfret || "";
+        const m = document.getElementById("markers"); m.innerHTML = "";
+        const d = document.getElementById("dots"); d.innerHTML = "";
+        chordObj.frets.forEach((f, i) => {
+            const x = 30 + (i * 20);
+            if (f <= 0) {
+                const txt = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                txt.setAttribute("x", x); txt.setAttribute("y", 70); txt.setAttribute("text-anchor", "middle");
+                txt.textContent = f === -1 ? "×" : "○"; m.appendChild(txt);
+            } else {
+                const c = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                c.setAttribute("cx", x); c.setAttribute("cy", 80 + (f * 30) - 15); c.setAttribute("r", 7);
+                c.setAttribute("fill", "#333"); d.appendChild(c);
+            }
+        });
+    }
+
+    function updatePreview() {
+        const root = document.querySelector("#root-row .selected").dataset.value;
+        const typeKey = document.querySelector("#variant-row .selected").dataset.value;
+        drawChord(chords[typeKey].find(c => c.note === (root + suffixMap[typeKey])));
+    }
+
+    function autoAddNextSection() {
+        let name = "Verse 1";
+        if (songData.length === 1) name = "Chorus";
+        else if (songData.length > 1) name = "New Section";
+        addNewSection(name);
+    }
+
+    function addNewSection(title = "New Section", existingChords = []) {
+        const id = Date.now();
+        songData.push({ id, title, chords: JSON.parse(JSON.stringify(existingChords)) });
+        setActiveSection(id);
+    }
+
+    function setActiveSection(id) { activeSectionId = id; renderSections(); }
+
+    function moveSection(id, dir) {
+        const idx = songData.findIndex(s => s.id === id);
+        const nIdx = idx + dir;
+        if (nIdx >= 0 && nIdx < songData.length) {
+            [songData[idx], songData[nIdx]] = [songData[nIdx], songData[idx]];
+            renderSections();
+        }
+    }
+
+    function editChord(sId, cIdx) {
+        editingChordPath = { sId, cIdx };
+        const chord = songData.find(s => s.id === sId).chords[cIdx];
+        let rootPart = chord.note.match(/^[A-G][#b]?/)[0];
+        let qualPart = Object.keys(suffixMap).find(k => suffixMap[k] === chord.note.replace(rootPart, ''));
+        document.querySelectorAll('#root-row .option-btn').forEach(b => b.classList.toggle('selected', b.dataset.value === rootPart));
+        document.querySelectorAll('#variant-row .option-btn').forEach(b => b.classList.toggle('selected', b.dataset.value === qualPart));
+        document.getElementById('add-btn').style.display = 'none';
+        document.getElementById('update-btn').style.display = 'block';
+        document.getElementById('cancel-btn').style.display = 'block';
+        updatePreview();
+        renderSections();
+    }
+
+    function updateChord() {
+        const root = document.querySelector("#root-row .selected").dataset.value;
+        const typeKey = document.querySelector("#variant-row .selected").dataset.value;
+        const entry = chords[typeKey].find(c => c.note === (root + suffixMap[typeKey]));
+        songData.find(s => s.id === editingChordPath.sId).chords[editingChordPath.cIdx] = {...entry};
+        cancelEdit();
+    }
+
+    function cancelEdit() {
+        editingChordPath = null;
+        document.getElementById('add-btn').style.display = 'block';
+        document.getElementById('update-btn').style.display = 'none';
+        document.getElementById('cancel-btn').style.display = 'none';
+        renderSections();
+    }
+
+    function addToActiveSection() {
+        if (!activeSectionId) return;
+        const root = document.querySelector("#root-row .selected").dataset.value;
+        const typeKey = document.querySelector("#variant-row .selected").dataset.value;
+        const entry = chords[typeKey].find(c => c.note === (root + suffixMap[typeKey]));
+        songData.find(s => s.id === activeSectionId).chords.push({...entry});
+        renderSections();
+    }
+
+    function renderSections() {
+        const container = document.getElementById("sections-container");
+        container.innerHTML = "";
+        songData.forEach(sec => {
+            const div = document.createElement("div");
+            div.className = `section-block ${sec.id === activeSectionId ? 'active' : ''}`;
+            div.onclick = () => setActiveSection(sec.id);
+            div.innerHTML = `
+                <div class="section-header">
+                    <span style="cursor:pointer" onclick="event.stopPropagation();moveSection(${sec.id}, -1)">▲</span>
+                    <span style="cursor:pointer" onclick="event.stopPropagation();moveSection(${sec.id}, 1)">▼</span>
+                    <input type="text" class="section-title" value="${sec.title}" onclick="event.stopPropagation()" oninput="songData.find(s=>s.id===${sec.id}).title=this.value">
+                    <button class="mini-btn" onclick="event.stopPropagation();addNewSection('${sec.title} (Copy)', songData.find(s=>s.id===${sec.id}).chords)">Dup</button>
+                    <button class="mini-btn" style="color:red" onclick="event.stopPropagation();songData=songData.filter(s=>s.id!==${sec.id});renderSections();">×</button>
+                </div>
+                <div class="chord-list">
+                    ${sec.chords.map((c, i) => {
+                        const isEditing = editingChordPath && editingChordPath.sId === sec.id && editingChordPath.cIdx === i;
+                        return `<div class="song-item ${isEditing ? 'editing' : ''}" onclick="event.stopPropagation(); editChord(${sec.id}, ${i})">
+                            ${c.note} <span class="chord-del" onclick="event.stopPropagation();songData.find(s=>s.id===${sec.id}).chords.splice(${i},1);renderSections();">×</span>
+                        </div>`;
+                    }).join('')}
+                </div>`;
+            container.appendChild(div);
+        });
+    }
+
+    function exportGroupedSong() {
+        const title = document.getElementById("song-title-input").value || "Song Sheet";
+        const generateSVG = (chord) => {
+            let m = ''; let d = '';
+            chord.frets.forEach((f, i) => {
+                const x = 30 + (i * 20);
+                if (f <= 0) m += `<text x="${x}" y="70" text-anchor="middle" font-size="14">${f===-1?'×':'○'}</text>`;
+                else d += `<circle cx="${x}" cy="${80+(f*30)-15}" r="7" fill="#333"/>`;
+            });
+            return `<div class="card"><svg width="100%" height="auto" viewBox="0 0 160 210">
+                <text x="80" y="35" font-size="28" font-weight="bold" text-anchor="middle" font-family="sans-serif">${chord.note}</text>
+                <text x="5" y="105" fill="red" font-size="16" font-family="sans-serif">${chord.firstfret || ""}</text>
+                <g stroke="#444" stroke-width="1.5">
+                    <line x1="30" y1="80" x2="130" y2="80" stroke-width="5"/>
+                    <line x1="30" y1="110" x2="130" y2="110"/><line x1="30" y1="140" x2="130" y2="140"/><line x1="30" y1="170" x2="130" y2="170"/><line x1="30" y1="200" x2="130" y2="200"/>
+                    <line x1="30" y1="80" x2="30" y2="200"/><line x1="50" y1="80" x2="50" y2="200"/><line x1="70" y1="80" x2="70" y2="200"/><line x1="90" y1="80" x2="90" y2="200"/><line x1="110" y1="80" x2="110" y2="200"/><line x1="130" y1="80" x2="130" y2="200"/>
+                </g>
+                <g font-family="sans-serif">${m}</g><g>${d}</g></svg></div>`;
+        };
+        const sectionsHtml = songData.map(sec => `<div class="sec"><h2>${sec.title}</h2><div class="grid">${sec.chords.map(c => generateSVG(c)).join('')}</div></div>`).join('');
+        const finalHtml = `<html><head><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>${title}</title><style>body { font-family: sans-serif; padding: 40px; max-width: 1000px; margin: auto; background: #fff; transition: 0.3s; } h1 { text-align: center; border-bottom: 2px solid #333; margin-bottom: 20px; } h2 { background: #f4f4f4; padding: 10px 15px; border-radius: 6px; margin-top: 30px; border-left: 5px solid #2196F3; font-size: 1.2rem; } .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; width: 100%; transition: 0.3s; } .card { border: 1px solid #eee; padding: 10px; border-radius: 8px; text-align: center; background: #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.03); } .controls-ui { position: fixed; top: 20px; right: 20px; background: white; padding: 10px; border-radius: 50px; box-shadow: 0 4px 15px rgba(0,0,0,0.15); display: flex; gap: 5px; z-index: 1000; border: 1px solid #ddd; } .tgl-btn { border: none; padding: 8px 15px; border-radius: 20px; cursor: pointer; font-weight: bold; background: #eee; font-size: 0.8rem; } .tgl-btn.active { background: #2196F3; color: white; } body.compact { padding: 20px; max-width: 1200px; } body.compact .grid { grid-template-columns: repeat(8, 1fr); gap: 10px; } body.compact .card { padding: 5px; } body.compact h2 { margin-top: 15px; font-size: 1rem; padding: 5px 10px; } @media (max-width: 800px) { .grid { grid-template-columns: repeat(3, 1fr); } body.compact .grid { grid-template-columns: repeat(4, 1fr); } } @media (max-width: 500px) { .grid { grid-template-columns: repeat(2, 1fr); } body.compact .grid { grid-template-columns: repeat(3, 1fr); } .controls-ui { top: auto; bottom: 20px; right: 50%; transform: translateX(50%); } } @media print { .controls-ui { display: none; } .sec { page-break-inside: avoid; } }</style></head><body><div class="controls-ui"><button class="tgl-btn active" id="btn-std" onclick="setSize('std')">Standard</button><button class="tgl-btn" id="btn-mini" onclick="setSize('mini')">Compact (50%)</button></div><h1>${title}</h1>${sectionsHtml}<script>function setSize(mode) { const isMini = mode === 'mini'; document.body.classList.toggle('compact', isMini); document.getElementById('btn-std').classList.toggle('active', !isMini); document.getElementById('btn-mini').classList.toggle('active', isMini); }<\/script></body></html>`;
+        const blob = new Blob([finalHtml], {type: 'text/html'});
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = title.replace(/\s+/g, '_') + '.html'; a.click();
+    }
+
+    // Init
+    document.querySelectorAll('.option-btn').forEach(btn => {
+        btn.onclick = (e) => {
+            e.currentTarget.parentElement.querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
+            e.currentTarget.classList.add('selected');
+            updatePreview();
+        };
+    });
+    renderLibrary();
+    autoAddNextSection();
+    updatePreview();
+</script>
+</body>
+</html>
