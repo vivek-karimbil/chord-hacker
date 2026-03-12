@@ -4,7 +4,7 @@ The files here are:
 * Guitar Chords.html
 * Guitar Detailed Chords.html
 
-These utilities show the finguring for a single chord, allowing selection of the note, the sharp/flat/natural, and the major/minor.... variant
+These utilities show the finguring for a single chord, allowing selection of the note, the sharp/flat/natural, and the major/minor/.... other variants
 
 
 The other files in this repository are:
