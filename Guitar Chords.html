@@ -1,125 +1,164 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <style>
-        :root {
-            --bg-color: #f8f9fa;
-            --card-bg: #ffffff;
-            --primary: #2196F3;
-            --border: #dee2e6;
-        }
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+    :root {
+        --bg-color: #f8f9fa;
+        --card-bg: #ffffff;
+        --primary: #2196F3;
+        --border: #dee2e6;
+    }
 
-        body {
-            font-family: system-ui, -apple-system, sans-serif;
-            margin: 0;
-            padding: 0;
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-            background-color: var(--bg-color);
-            overflow: hidden;
-        }
+    body {
+        font-family: system-ui, -apple-system, sans-serif;
+        margin: 0;
+        padding: 0;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        background-color: var(--bg-color);
+    }
 
-        header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px 20px;
-            background: white;
-            border-bottom: 1px solid var(--border);
-        }
+    header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px 20px;
+        background: white;
+        border-bottom: 1px solid var(--border);
+        position: sticky;
+        top: 0;
+        z-index: 100;
+    }
 
-        h1 { margin: 0; font-size: 1.1rem; }
+    h1 { margin: 0; font-size: 1.1rem; }
 
-        .layout-toggle {
-            padding: 6px 12px;
-            cursor: pointer;
-            background: #eee;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            font-size: 0.8rem;
-            font-weight: bold;
-        }
+    .layout-toggle {
+        padding: 6px 12px;
+        cursor: pointer;
+        background: #eee;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        font-size: 0.8rem;
+        font-weight: bold;
+    }
 
-        /* Container for the Two Modes */
-        #app-container {
-            display: flex;
-            flex: 1;
-            padding: 20px;
-            gap: 20px;
-            justify-content: center;
-            align-items: center;
-            transition: all 0.3s ease;
-        }
+    /* --- App Container Logic --- */
+    #app-container {
+        display: flex;
+        flex: 1;
+        padding: 10px;
+        gap: 15px;
+        justify-content: center;
+        align-items: center;
+        transition: all 0.3s ease;
+    }
 
-        /* PORTRAIT MODE (Side-by-side) */
-        #app-container.portrait-mode {
-            flex-direction: row;
-        }
+    /* PORTRAIT MODE (Desktop Layout) */
+    #app-container.portrait-mode {
+        display: grid;
+        grid-template-columns: auto 1fr; 
+        max-width: 1000px;
+        margin: auto;
+        gap: 20px;
+    }
 
-        /* STACK MODE (Vertical) */
-        #app-container.stack-mode {
-            flex-direction: column;
-            overflow-y: auto;
-        }
+    #app-container.portrait-mode .controls {
+        display: grid;
+        /* Roots and Accidentals share the top row */
+        /* Variants take the whole bottom row */
+        grid-template-areas: 
+            "roots accidentals"
+            "variants variants";
+        grid-template-columns: 1fr auto; /* Accidentals only take what they need */
+        gap: 10px;
+    }
 
-        .chord-svg-container {
-            background: white;
-            padding: 15px;
-            border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-            flex-shrink: 0;
-        }
+    /* Mapping Groups to Grid Areas */
+    #app-container.portrait-mode .selection-group:nth-child(1) { grid-area: roots; }
+    #app-container.portrait-mode .selection-group:nth-child(2) { 
+        grid-area: accidentals; 
+        width: 60px; /* Forces it to stay one-button wide */
+    }
+    #app-container.portrait-mode .selection-group:nth-child(3) { grid-area: variants; }
 
-        .controls {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            width: 100%;
-            max-width: 450px;
-        }
+    /* Forcing Accidental Buttons into a Vertical Tower */
+    #app-container.portrait-mode .selection-group:nth-child(2) .selection-row {
+        flex-direction: column;
+        height: 100%;
+    }
 
-        .selection-group {
-            background: white;
-            padding: 10px;
-            border-radius: 8px;
-            border: 1px solid var(--border);
-        }
+    /* STACK MODE (Mobile Layout) */
+    #app-container.stack-mode {
+        flex-direction: column;
+        align-items: center;
+        overflow-y: auto;
+    }
 
-        h3 { margin: 0 0 8px 0; font-size: 0.7rem; color: #888; text-transform: uppercase; }
+    #app-container.stack-mode .controls {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        width: 100%;
+        max-width: 450px;
+    }
 
-        .selection-row {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 6px;
-        }
+    /* --- Global Button & Row Styles --- */
+    .selection-group {
+        background: white;
+        padding: 10px;
+        border-radius: 8px;
+        border: 1px solid var(--border);
+    }
 
-        .option-btn {
-            flex: 1 1 40px;
-            padding: 10px 5px;
-            border: 1px solid var(--border);
-            background: #fff;
-            cursor: pointer;
-            border-radius: 6px;
-            font-size: 0.9rem;
-            text-align: center;
-            transition: 0.2s;
-        }
+    h3 { margin: 0 0 8px 0; font-size: 0.7rem; color: #888; text-transform: uppercase; }
 
-        .option-btn.selected {
-            background: var(--primary);
-            color: white;
-            border-color: #1976D2;
-            font-weight: bold;
-            box-shadow: 0 2px 4px rgba(33, 150, 243, 0.3);
-        }
+    .selection-row {
+        display: flex;
+        flex-wrap: wrap; /* Allows roots to wrap if needed */
+        gap: 6px;
+    }
 
-        /* Correct SVG Sizing */
-        svg {
-            display: block;
-            margin: auto;
-        }
-    </style>
+    .option-btn {
+        flex: 1 1 40px; 
+        padding: 10px 5px;
+        border: 1px solid var(--border);
+        background: #fff;
+        cursor: pointer;
+        border-radius: 6px;
+        font-size: 0.9rem;
+        text-align: center;
+        transition: 0.2s;
+    }
+
+    .option-btn.selected {
+        background: var(--primary);
+        color: white;
+        border-color: #1976D2;
+        font-weight: bold;
+    }
+
+    /* --- Visuals --- */
+    .chord-svg-container {
+        background: white;
+        padding: 15px;
+        border-radius: 12px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        flex-shrink: 0;
+    }
+
+    svg {
+        display: block;
+        margin: auto;
+    }
+
+    /* Natural symbol font fix */
+    .option-btn[data-value=""] {
+        font-family: "Segoe UI Symbol", "Apple Symbols", sans-serif;
+        font-size: 1.1rem;
+    }
+</style>
 </head>
 <body>
 
@@ -184,7 +223,7 @@
         <div class="selection-group">
             <h3>Accidental</h3>
             <div class="selection-row" id="type-row">
-                <div class="option-btn selected" data-value="">♮</div>
+                <div class="option-btn selected" data-value="">&#9838;</div>
                 <div class="option-btn" data-value="#">#</div>
                 <div class="option-btn" data-value="b">b</div>
             </div>
@@ -443,6 +482,16 @@
     });
 
     drawChord();
+</script>
+<script>
+  // Force scroll to top on page load/refresh
+  window.onbeforeunload = function () {
+    window.scrollTo(0, 0);
+  };
+  
+  if ('scrollRestoration' in history) {
+    history.scrollRestoration = 'manual';
+    }
 </script>
 </body>
 </html>
