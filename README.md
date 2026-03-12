@@ -3,7 +3,7 @@ These utilities were written to help me in my way to long journey to make music 
 The files here are:
 * Guitar Chords.html
 * Guitar Detailed Chords.html
-  These utilities show the finguring for a single chord, allowing selection of the note, the sharp/flat/natural, and the major/minor.... variant
+These utilities show the finguring for a single chord, allowing selection of the note, the sharp/flat/natural, and the major/minor.... variant
 
 The other files in this repository are:
 * SongChords.html - an editor to not the chords of a song, and save them
