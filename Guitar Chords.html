@@ -55,41 +55,38 @@
         transition: all 0.3s ease;
     }
 
-    /* PORTRAIT MODE (Desktop Layout) */
+    /* PORTRAIT MODE (Desktop Sidebar Layout) */
     #app-container.portrait-mode {
         display: grid;
-        grid-template-columns: auto 1fr; 
+        grid-template-columns: 350px auto; /* Sidebar for controls, auto for SVG */
         max-width: 1000px;
         margin: auto;
-        gap: 20px;
+        gap: 25px;
     }
 
     #app-container.portrait-mode .controls {
         display: grid;
-        /* Roots and Accidentals share the top row */
-        /* Variants take the whole bottom row */
+        /* Stacked vertically: Roots -> Accidentals -> Variants */
         grid-template-areas: 
-            "roots accidentals"
-            "variants variants";
-        grid-template-columns: 1fr auto; /* Accidentals only take what they need */
-        gap: 10px;
+            "roots"
+            "accidentals"
+            "variants";
+        grid-template-columns: 1fr;
+        gap: 12px;
     }
 
     /* Mapping Groups to Grid Areas */
     #app-container.portrait-mode .selection-group:nth-child(1) { grid-area: roots; }
-    #app-container.portrait-mode .selection-group:nth-child(2) { 
-        grid-area: accidentals; 
-        width: 60px; /* Forces it to stay one-button wide */
-    }
+    #app-container.portrait-mode .selection-group:nth-child(2) { grid-area: accidentals; }
     #app-container.portrait-mode .selection-group:nth-child(3) { grid-area: variants; }
 
-    /* Forcing Accidental Buttons into a Vertical Tower */
+    /* Ensure Accidental row stays horizontal in the sidebar */
     #app-container.portrait-mode .selection-group:nth-child(2) .selection-row {
-        flex-direction: column;
-        height: 100%;
+        flex-direction: row;
+        height: auto;
     }
 
-    /* STACK MODE (Mobile Layout) */
+    /* STACK MODE (Mobile/Centered Layout) */
     #app-container.stack-mode {
         flex-direction: column;
         align-items: center;
@@ -104,22 +101,30 @@
         max-width: 450px;
     }
 
-    /* --- Global Button & Row Styles --- */
+    /* --- Global Selection Group Styles --- */
     .selection-group {
         background: white;
-        padding: 10px;
+        padding: 12px;
         border-radius: 8px;
         border: 1px solid var(--border);
+        box-shadow: 0 2px 4px rgba(0,0,0,0.02);
     }
 
-    h3 { margin: 0 0 8px 0; font-size: 0.7rem; color: #888; text-transform: uppercase; }
+    h3 { 
+        margin: 0 0 8px 0; 
+        font-size: 0.7rem; 
+        color: #888; 
+        text-transform: uppercase; 
+        letter-spacing: 0.05rem;
+    }
 
     .selection-row {
         display: flex;
-        flex-wrap: wrap; /* Allows roots to wrap if needed */
+        flex-wrap: wrap;
         gap: 6px;
     }
 
+    /* --- Button Styles --- */
     .option-btn {
         flex: 1 1 40px; 
         padding: 10px 5px;
@@ -129,7 +134,12 @@
         border-radius: 6px;
         font-size: 0.9rem;
         text-align: center;
-        transition: 0.2s;
+        transition: all 0.2s;
+    }
+
+    .option-btn:hover {
+        background: #f0f7ff;
+        border-color: var(--primary);
     }
 
     .option-btn.selected {
@@ -137,15 +147,20 @@
         color: white;
         border-color: #1976D2;
         font-weight: bold;
+        box-shadow: 0 2px 5px rgba(33, 150, 243, 0.3);
     }
 
-    /* --- Visuals --- */
+    /* --- Visuals (SVG Container) --- */
     .chord-svg-container {
         background: white;
-        padding: 15px;
+        padding: 20px;
         border-radius: 12px;
         box-shadow: 0 4px 15px rgba(0,0,0,0.05);
         flex-shrink: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        border: 1px solid var(--border);
     }
 
     svg {
@@ -153,12 +168,13 @@
         margin: auto;
     }
 
-    /* Natural symbol font fix */
+    /* Special Font handling for Natural/Sharp/Flat symbols */
     .option-btn[data-value=""] {
         font-family: "Segoe UI Symbol", "Apple Symbols", sans-serif;
         font-size: 1.1rem;
     }
 </style>
+
 </head>
 <body>
 
