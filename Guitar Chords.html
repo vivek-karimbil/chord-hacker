@@ -3,471 +3,315 @@
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
-    :root {
-        --bg-color: #f8f9fa;
-        --card-bg: #ffffff;
-        --primary: #2196F3;
-        --border: #dee2e6;
-    }
+        :root {
+            --bg-color: #f8f9fa;
+            --card-bg: #ffffff;
+            --primary: #2196F3;
+            --border: #dee2e6;
+        }
 
-    body {
-        font-family: system-ui, -apple-system, sans-serif;
-        margin: 0;
-        padding: 0;
-        min-height: 100vh;
-        display: flex;
-        flex-direction: column;
-        background-color: var(--bg-color);
-    }
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            margin: 0; padding: 0; min-height: 100vh;
+            display: flex; flex-direction: column;
+            background-color: var(--bg-color);
+        }
 
-    header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 10px 20px;
-        background: white;
-        border-bottom: 1px solid var(--border);
-        position: sticky;
-        top: 0;
-        z-index: 100;
-    }
+        header {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 10px 20px; background: white; border-bottom: 1px solid var(--border);
+        }
 
-    h1 { margin: 0; font-size: 1.1rem; }
+        h1 { margin: 0; font-size: 1rem; }
 
-    .layout-toggle {
-        padding: 6px 12px;
-        cursor: pointer;
-        background: #eee;
-        border: 1px solid #ccc;
-        border-radius: 4px;
-        font-size: 0.8rem;
-        font-weight: bold;
-    }
+        /* --- CONTAINER BASE --- */
+        #app-container {
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            padding: 15px; 
+            gap: 20px;
+        }
 
-    /* --- App Container Logic --- */
-    #app-container {
-        display: flex;
-        flex: 1;
-        padding: 10px;
-        gap: 15px;
-        justify-content: center;
-        align-items: center;
-        transition: all 0.3s ease;
-    }
+        .chord-svg-container {
+            background: white; padding: 20px; border-radius: 12px;
+            border: 1px solid var(--border); width: 100%; max-width: 190px;
+        }
 
-    /* PORTRAIT MODE (Desktop Sidebar Layout) */
-    #app-container.portrait-mode {
-        display: grid;
-        grid-template-columns: 350px auto; /* Sidebar for controls, auto for SVG */
-        max-width: 1000px;
-        margin: auto;
-        gap: 25px;
-    }
+        .controls { 
+            display: block; 
+            flex-direction: column; 
+            gap: 12px; 
+            width: 100%; 
+        }
 
-    #app-container.portrait-mode .controls {
-        display: grid;
-        /* Stacked vertically: Roots -> Accidentals -> Variants */
-        grid-template-areas: 
-            "roots"
-            "accidentals"
-            "variants";
-        grid-template-columns: 1fr;
-        gap: 12px;
-    }
+        /* --- BUTTON GROUPS (Sidebar Centered by Default) --- */
+        .selection-group { 
+            background: white; 
+            padding: 12px; 
+            border-radius: 8px; 
+            border: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            align-items: center; /* Centered for Sidebar */
+        }
 
-    /* Mapping Groups to Grid Areas */
-    #app-container.portrait-mode .selection-group:nth-child(1) { grid-area: roots; }
-    #app-container.portrait-mode .selection-group:nth-child(2) { grid-area: accidentals; }
-    #app-container.portrait-mode .selection-group:nth-child(3) { grid-area: variants; }
+        h3 { 
+            margin: 0 0 8px 0; 
+            font-size: 0.7rem; 
+            color: #888; 
+            text-transform: uppercase; 
+            text-align: left; 
+        }
 
-    /* Ensure Accidental row stays horizontal in the sidebar */
-    #app-container.portrait-mode .selection-group:nth-child(2) .selection-row {
-        flex-direction: row;
-        height: auto;
-    }
+        .selection-row { 
+            display: flex; 
+            flex-wrap: wrap; 
+            gap: 6px; 
+        }
 
-    /* STACK MODE (Mobile/Centered Layout) */
-    #app-container.stack-mode {
-        flex-direction: column;
-        align-items: center;
-        overflow-y: auto;
-    }
+        /* --- STACK MODE OVERRIDES (Left Aligned) --- */
+        /* This targets mobile OR when the "Switch to Stack" button is clicked */
+        @media (max-width: 768px), .force-stack {
+            #app-container { align-items: flex-start; }
+            .selection-group { align-items: flex-start; }
+            .selection-row { justify-content: flex-start; }
+            h3 { text-align: left; }
+        }
 
-    #app-container.stack-mode .controls {
-        display: flex;
-        flex-direction: column;
-        gap: 12px;
-        width: 100%;
-        max-width: 450px;
-    }
+        /* --- LAPTOP SIDEBAR LAYOUT --- */
+        @media only screen and (min-width: 769px) {
+            #app-container:not(.force-stack) {
+                display: grid; 
+                grid-template-columns: 205px 1fr;
+                align-items: start; 
+                max-width: 1100px; 
+                margin: 20px auto; 
+                gap: 40px;
+            }
+        }
 
-    /* --- Global Selection Group Styles --- */
-    .selection-group {
-        background: white;
-        padding: 12px;
-        border-radius: 8px;
-        border: 1px solid var(--border);
-        box-shadow: 0 2px 4px rgba(0,0,0,0.02);
-    }
+        /* This applies ONLY when Sidebar Mode is active */
+        #app-container:not(.force-stack) .controls {
+            display: block;
+            width: 100%;
+            align-items: left; 
+            justify-content: left; 
+        }
 
-    h3 { 
-        margin: 0 0 8px 0; 
-        font-size: 0.7rem; 
-        color: #888; 
-        text-transform: uppercase; 
-        letter-spacing: 0.05rem;
-    }
+        #app-container:not(.force-stack) .selection-group { 
+            background: white; 
+            padding: 12px; 
+            border-radius: 8px; 
+            border: 1px solid var(--border);
+            display: inline-block;
+            flex-direction: column;
+            align-items: center; /* Centered for Sidebar */
+        }
 
-    .selection-row {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 6px;
-    }
 
-    /* --- Button Styles --- */
-    .option-btn {
-        flex: 1 1 40px; 
-        padding: 10px 5px;
-        border: 1px solid var(--border);
-        background: #fff;
-        cursor: pointer;
-        border-radius: 6px;
-        font-size: 0.9rem;
-        text-align: center;
-        transition: all 0.2s;
-    }
+        /* --- BUTTON STYLING --- */
+        .option-btn {
+            min-width: 60px;
+            max-width: 60px; 
+            padding: 12px 5px;
+            border: 1px solid var(--border);
+            background: #fff;
+            cursor: pointer;
+            border-radius: 6px;
+            min-height: 45px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.95rem;
+            transition: all 0.2s;
+            flex: 0 1 auto; 
+        }
 
-    .option-btn:hover {
-        background: #f0f7ff;
-        border-color: var(--primary);
-    }
+        .option-btn[data-value=""], 
+        .option-btn[data-value="#"], 
+        .option-btn[data-value="b"] {
+            font-size: 1.3rem;
+        }
 
-    .option-btn.selected {
-        background: var(--primary);
-        color: white;
-        border-color: #1976D2;
-        font-weight: bold;
-        box-shadow: 0 2px 5px rgba(33, 150, 243, 0.3);
-    }
-
-    /* --- Visuals (SVG Container) --- */
-    .chord-svg-container {
-        background: white;
-        padding: 20px;
-        border-radius: 12px;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-        flex-shrink: 0;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        border: 1px solid var(--border);
-    }
-
-    svg {
-        display: block;
-        margin: auto;
-    }
-
-    /* Special Font handling for Natural/Sharp/Flat symbols */
-    .option-btn[data-value=""] {
-        font-family: "Segoe UI Symbol", "Apple Symbols", sans-serif;
-        font-size: 1.1rem;
-    }
-</style>
-
+        .option-btn.selected { background: var(--primary); color: white; font-weight: bold; }
+        
+        #note-display { font-size: 1.5rem; font-weight: bold; text-align: center; margin-bottom: 10px; }
+    </style>
 </head>
 <body>
 
 <header>
-    <h1><a href="./index.html" style="text-decoration: none; color: inherit;">Chord Sandbox</a></h1>
-    <button class="layout-toggle" onclick="toggleLayout()">Switch to Stack Mode</button>
+    <h1>Chord Sandbox</h1>
+    <button class="layout-toggle" onclick="toggleLayout()">Switch to Stack</button>
 </header>
 
-<div id="app-container" class="portrait-mode">
-    
+<div id="app-container">
     <div class="chord-svg-container">
-        <svg width="240" height="280" viewBox="0 0 130 150" xmlns="http://www.w3.org/2000/svg">
-            <g>
-                <text id="note-display" x="10" y="15" font-size="14" font-weight="bold" fill="black">C</text>
-                <text id="comment" x="60" y="15" font-size="8" fill="grey"></text>
-                <text id="firstfret" x="2" y="42" font-size="12" fill="black"></text>
+        <div id="note-display">C</div>
+        <div id="comment" style="font-size: 0.8rem; color: #666; text-align: center; height: 1.2rem;"></div>
+        <svg width="200" height="180" viewBox="0 0 100 160">
+            <line id="fret0" x1="10" y1="35" x2="85" y2="35" stroke="black" stroke-width="4"/>
+            <line x1="10" y1="60" x2="85" y2="60" stroke="gray" stroke-width="1"/>
+            <line x1="10" y1="85" x2="85" y2="85" stroke="gray" stroke-width="1"/>
+            <line x1="10" y1="110" x2="85" y2="110" stroke="gray" stroke-width="1"/>
+            <line x1="10" y1="135" x2="85" y2="135" stroke="gray" stroke-width="1"/>
+            
+            <line x1="10" y1="35" x2="10" y2="135" stroke="black" stroke-width="1"/>
+            <line x1="25" y1="35" x2="25" y2="135" stroke="black" stroke-width="1"/>
+            <line x1="40" y1="35" x2="40" y2="135" stroke="black" stroke-width="1"/>
+            <line x1="55" y1="35" x2="55" y2="135" stroke="black" stroke-width="1"/>
+            <line x1="70" y1="35" x2="70" y2="135" stroke="black" stroke-width="1"/>
+            <line x1="85" y1="35" x2="85" y2="135" stroke="black" stroke-width="1"/>
 
-                <text id="opun1" x="15" y="28" font-size="12" text-anchor="middle"> </text>
-                <text id="opun2" x="35" y="28" font-size="12" text-anchor="middle"> </text>
-                <text id="opun3" x="55" y="28" font-size="12" text-anchor="middle"> </text>
-                <text id="opun4" x="75" y="28" font-size="12" text-anchor="middle"> </text>
-                <text id="opun5" x="95" y="28" font-size="12" text-anchor="middle"> </text>
-                <text id="opun6" x="115" y="28" font-size="12" text-anchor="middle"> </text>
+            <circle id="note1" cx="10" cy="0" r="4" fill="black" />
+            <circle id="note2" cx="25" cy="0" r="4" fill="black" />
+            <circle id="note3" cx="40" cy="0" r="4" fill="black" />
+            <circle id="note4" cx="55" cy="0" r="4" fill="black" />
+            <circle id="note5" cx="70" cy="0" r="4" fill="black" />
+            <circle id="note6" cx="85" cy="0" r="4" fill="black" />
 
-                <line id="fret0" x1="15" y1="35" x2="115" y2="35" stroke="black" stroke-width="4" />
-                <line x1="15" y1="60" x2="115" y2="60" stroke="black" stroke-width="1" />
-                <line x1="15" y1="85" x2="115" y2="85" stroke="black" stroke-width="1" />
-                <line x1="15" y1="110" x2="115" y2="110" stroke="black" stroke-width="1" />
-                <line x1="15" y1="135" x2="115" y2="135" stroke="black" stroke-width="1" />
-
-                <line x1="15" y1="35" x2="15" y2="135" stroke="black" />
-                <line x1="35" y1="35" x2="35" y2="135" stroke="black" />
-                <line x1="55" y1="35" x2="55" y2="135" stroke="black" />
-                <line x1="75" y1="35" x2="75" y2="135" stroke="black" />
-                <line x1="95" y1="35" x2="95" y2="135" stroke="black" />
-                <line x1="115" y1="35" x2="115" y2="135" stroke="black" />
-
-                <circle id="note1" cx="15" cy="0" r="5" fill="black" style="visibility:hidden"/>
-                <circle id="note2" cx="35" cy="0" r="5" fill="black" style="visibility:hidden"/>
-                <circle id="note3" cx="55" cy="0" r="5" fill="black" style="visibility:hidden"/>
-                <circle id="note4" cx="75" cy="0" r="5" fill="black" style="visibility:hidden"/>
-                <circle id="note5" cx="95" cy="0" r="5" fill="black" style="visibility:hidden"/>
-                <circle id="note6" cx="115" cy="0" r="5" fill="black" style="visibility:hidden"/>
-            </g>
+            <text id="opun1" x="8" y="30" font-size="8"> </text>
+            <text id="opun2" x="23" y="30" font-size="8"> </text>
+            <text id="opun3" x="38" y="30" font-size="8"> </text>
+            <text id="opun4" x="53" y="30" font-size="8"> </text>
+            <text id="opun5" x="68" y="30" font-size="8"> </text>
+            <text id="opun6" x="83" y="30" font-size="8"> </text>
+            <text id="firstfret" x="90" y="50" font-size="10" font-weight="bold"></text>
         </svg>
     </div>
 
     <div class="controls">
-        <div class="selection-group">
-            <h3>Root</h3>
-            <div class="selection-row" id="root-row">
-                <div class="option-btn" data-value="A">A</div>
-                <div class="option-btn" data-value="B">B</div>
-                <div class="option-btn selected" data-value="C">C</div>
-                <div class="option-btn" data-value="D">D</div>
-                <div class="option-btn" data-value="E">E</div>
-                <div class="option-btn" data-value="F">F</div>
-                <div class="option-btn" data-value="G">G</div>
+        <div class="top-button-section">
+            <div class="selection-group root-group">
+                <h3>Root</h3>
+                <div class="selection-row" id="root-row"></div>
             </div>
         </div>
-
-        <div class="selection-group">
-            <h3>Accidental</h3>
-            <div class="selection-row" id="type-row">
-                <div class="option-btn selected" data-value="">&#9838;</div>
-                <div class="option-btn" data-value="#">#</div>
-                <div class="option-btn" data-value="b">b</div>
-            </div>
-        </div>
-
-        <div class="selection-group">
+        <div class="selection-group variant-group">
             <h3>Chord Type</h3>
-            <div class="selection-row" id="variant-row">
-                <div class="option-btn selected" data-value="">Maj</div>
-                <div class="option-btn" data-value="m">min</div>
-                <div class="option-btn" data-value="6">6</div>
-                <div class="option-btn" data-value="7">7</div>
-                <div class="option-btn" data-value="9">9</div>
-                <div class="option-btn" data-value="m6">m6</div>
-                <div class="option-btn" data-value="m7">m7</div>
-                <div class="option-btn" data-value="M7">M7</div>
-                <div class="option-btn" data-value="dim">dim</div>
-                <div class="option-btn" data-value="+">aug</div>
-                <div class="option-btn" data-value="sus">sus</div>
-            </div>
+            <div class="selection-row" id="variant-row"></div>
+        </div>
+        <div class="selection-group accidental-group">
+            <h3>Accidental</h3>
+            <div class="selection-row" id="accidental-row"></div>
         </div>
     </div>
 </div>
 
 <script>
-    // Paste your full 'chords' object here
     const chords = {
-        naturals: [
-            {note: "Ab", frets: [ 1, 3, 3, 2, 1, 1], firstfret: "4"},
-            {note: "A", frets: [ -1, 0, 2, 2, 2, 0]},
-            {note: "Bb", frets: [ -1, 1, 3, 3, 3, 1]},
-            {note: "B", frets: [ -1, 2, 4, 4, 4, 2]},
-            {note: "C", frets: [ 3, 3, 2, 0, 1, 0]},
-            {note: "C#", frets: [ -1, -1, 3, 1, 2, 1]},
-            {note: "D", frets: [ -1, -1, 0, 2, 3, 2]},
-            {note: "Eb", frets: [ 0, 0, 3, 1, 2, 1], firstfret: "3"},
-            {note: "E", frets: [ 0, 2, 2, 1, 0, 0]},
-            {note: "F", frets: [ 1, 3, 3, 2, 1, 1]},
-            {note: "F#", frets: [ 2, 4, 4, 3, 2, 2]},
-            {note: "G", frets: [ 3, 2, 0, 0, 0, 3]}
-        ],
-        minors: [
-            {note: "Abm", frets: [ 1, 3, 3, 1, 1, 1], firstfret: "4"},
-            {note: "Am", frets: [ -1, 0, 2, 2, 1, 0]},
-            {note: "Bbm", frets: [ -1, 1, 3, 3, 2, 1]},
-            {note: "Bm", frets: [ -1, 2, 4, 4, 3, 2]},
-            {note: "Cm", frets: [ -1, 1, 3, 3, 2, 1], firstfret: "3"},
-            {note: "C#m", frets: [ -1, -1, 2, 1, 2, 0]},
-            {note: "Dm", frets: [ -1, -1, 0, 2, 3, 1]},
-            {note: "Ebm", frets: [ -1, -1, 4, 3, 4, 2]},
-            {note: "Em", frets: [ 0, 2, 2, 0, 0, 0]},
-            {note: "Fm", frets: [ 1, 3, 3, 1, 1, 1]},
-            {note: "F#m", frets: [ 2, 4, 4, 2, 2, 2]},
-            {note: "Gm", frets: [ 1, 3, 3, 1, 1, 1], firstfret: "3"}
-        ],
-        sixths: [
-            {note: "Ab6", frets: [ 4, 3, 1, 1, 1, 1]},
-            {note: "A6", frets: [ -1, 0, 2, 2, 2, 2]},
-            {note: "Bb6", frets: [ 1, 1, 3, 3, 3, 3]},
-            {note: "B6", frets: [ 2, 2, 4, 4, 4, 4]},
-            {note: "C6", frets: [ -1, -1, 2, 2, 1, 3]},
-            {note: "C#6", frets: [ -1, -1, 3, 3, 2, 4]},
-            {note: "D6", frets: [ -1, 0, 0, 2, 0, 2]},
-            {note: "Eb6", frets: [ -1, -1, 1, 3, 1, 3]},
-            {note: "E6", frets: [ 0, 2, 2, 1, 2, 0]},
-            {note: "F6", frets: [ -1, -1, 0, 2, 1, 1]},
-            {note: "F#6", frets: [ -1, 4, 4, 3, 4, -1]},
-            {note: "G6", frets: [ 3, 2, 0, 0, 0, 0]}
-        ],
-        sevenths: [
-            {note: "Ab7", frets: [ -1, -1, 1, 1, 1, 2]},
-            {note: "A7", frets: [ -1, 0, 2, 2, 2, 3]},
-            {note: "Bb7", frets: [ -1, -1, 1, 1, 1, 2], firstfret: "3"},
-            {note: "B7", frets: [ -1, 2, 1, 2, 0, 2]},
-            {note: "C7", frets: [ -1, 3, 2, 3, 1, 0]},
-            {note: "C#7", frets: [ -1, -1, 3, 4, 2, 4]},
-            {note: "D7", frets: [ -1, -1, 0, 2, 1, 2]},
-            {note: "Eb7", frets: [ -1, -1, 1, 3, 2, 3]},
-            {note: "E7", frets: [ 0, 2, 2, 1, 3, 0]},
-            {note: "F7", frets: [ 1, 3, 1, 2, 1, 1]},
-            {note: "F#7", frets: [ -1, -1, 4, 3, 2, 0]},
-            {note: "G7", frets: [ 3, 2, 0, 0, 0, 1]}
-        ],
-        ninths: [
-            {note: "Ab9", frets: [ -1, -1, 1, 3, 1, 2]},
-            {note: "A9", frets: [ -1, 0, 2, 4, 2, 3]},
-            {note: "Bb9", frets: [ 1, 1, 3, 1, 1, 1], firstfret: "3"},
-            {note: "B9", frets: [ -1, 2, 1, 2, 2, 2]},
-            {note: "C9", frets: [ -1, 3, 2, 3, 3, 3]},
-            {note: "C#9", frets: [ -1, 4, 3, 4, 4, 4]},
-            {note: "D9", frets: [ 2, 0, 0, 2, 1, 0]},
-            {note: "Eb9", frets: [ 1, 1, 1, 3, 2, 1]},
-            {note: "E9", frets: [ 0, 2, 0, 1, 0, 2]},
-            {note: "F9", frets: [ -1, -1, 3, 2, 4, 3]},
-            {note: "F#9", frets: [ -1, -1, 2, 1, 4, 3], firstfret: "1"},
-            {note: "G9", frets: [ 3, 0, 0, 2, 0, 1]}
-        ],
-        minorsixth: [
-            {note: "Abm6", frets: [ -1, -1, -1, 4, 4, 4]},
-            {note: "Am6", frets: [ -1, 0, 2, 2, 1, 2]},
-            {note: "Bbm6", frets: [ -1, -1, 3, 3, 2, 3]},
-            {note: "Bm6", frets: [ -1, -1, 4, 4, 3, 4]},
-            {note: "Cm6", frets: [ -1, -1, 1, 2, 1, 3]},
-            {note: "C#m6", frets: [ -1, -1, 2, 3, 2, 4]},
-            {note: "Dm6", frets: [ -1, -1, 0, 2, 0, 1]},
-            {note: "Ebm6", frets: [ -1, -1, 1, 3, 1, 2]},
-            {note: "Em6", frets: [ 0, 2, 2, 0, 2, 0]},
-            {note: "Fm6", frets: [ -1, -1, 0, 1, 1, 1]},
-            {note: "F#m6", frets: [ -1, -1, 1, 2, 2, 2]},
-            {note: "Gm6", frets: [ -1, -1, 2, 3, 3, 3]}
-        ],
-        minorseventh: [
-            {note: "Abm7", frets: [ -1, -1, 1, 1, 0, 2]},
-            {note: "Am7", frets: [ -1, 0, 2, 2, 1, 3]},
-            {note: "Bbm7", frets: [ -1, -1, 3, 3, 2, 4]},
-            {note: "Bm7", frets: [ -1, 1, 3, 1, 2, 1], firstfret: 2},
-            {note: "Cm7", frets: [ -1, -1, 1, 3, 1, 3]},
-            {note: "C#m7", frets: [ -1, -1, 2, 4, 2, 4]},
-            {note: "Dm7", frets: [ -1, -1, 0, 2, 1, 1]},
-            {note: "Ebm7", frets: [ -1, -1, 1, 3, 2, 2]},
-            {note: "Em7", frets: [ 0, 2, 0, 0, 0, 0]},
-            {note: "Fm7", frets: [ 1, 3, 1, 1, 1, 1]},
-            {note: "F#m7", frets: [ -1, -1, 2, 2, 2, 2]},
-            {note: "Gm7", frets: [ 1, 3, 1, 1, 1, 1], firstfret: 3}
-        ],
-        majorseventh: [
-            {note: "AbM7", frets: [ -1, -1, 1, 1, 1, 3]},
-            {note: "AM7", frets: [ -1, 0, 2, 1, 2, 0]},
-            {note: "BbM7", frets: [ -1, 1, 3, 2, 3, -1]},
-            {note: "BM7", frets: [ -1, 2, 4, 3, 4, -1]},
-            {note: "CM7", frets: [ -1, 3, 2, 0, 0, 0]},
-            {note: "C#M7", frets: [ -1, 4, 3, 1, 1, 1]},
-            {note: "DM7", frets: [ -1, -1, 0, 2, 2, 2]},
-            {note: "EbM7", frets: [ -1, -1, 1, 3, 3, 3]},
-            {note: "EM7", frets: [ 0, 2, 1, 1, 0, 0]},
-            {note: "FM7", frets: [ -1, -1, 3, 2, 1, 0]},
-            {note: "F#M7", frets: [ -1, -1, 4, 3, 2, 1]},
-            {note: "GM7", frets: [ -1, -1, 4, 3, 2, 1], firstfret: 2}
-        ],
-        diminished: [
-            {note: "Abdim", frets: [ -1, -1, 0, 1, 0, 1]},
-            {note: "Adim", frets: [ -1, -1, 1, 2, 1, 2]},
-            {note: "Bbdim", frets: [ -1, -1, 2, 3, 2, 3]},
-            {note: "Bdim", frets: [ -1, -1, 0, 1, 0, 1]},
-            {note: "Cdim", frets: [ -1, -1, 1, 2, 1, 2]},
-            {note: "C#dim", frets: [ -1, -1, 2, 3, 2, 3]},
-            {note: "Ddim", frets: [ -1, -1, 0, 1, 0, 1]},
-            {note: "Ebdim", frets: [ -1, -1, 1, 2, 1, 2]},
-            {note: "Edim", frets: [ -1, -1, 2, 3, 2, 3]},
-            {note: "Fdim", frets: [ -1, -1, 0, 1, 0, 1]},
-            {note: "F#dim", frets: [ -1, -1, 1, 2, 1, 2]},
-            {note: "Gdim", frets: [ -1, -1, 2, 3, 2, 3]}
-        ],
-        augmented: [
-            {note: "Ab+", frets: [ -1, -1, 2, 1, 1, 0]},
-            {note: "A+", frets: [ -1, 0, 3, 2, 2, 1]},
-            {note: "Bb+", frets: [ -1, -1, 0, 3, 3, 2]},
-            {note: "B+", frets: [ -1, -1, 3, 2, 2, 1], firstfret: "3"},
-            {note: "C+", frets: [ -1, -1, 2, 1, 1, 0]},
-            {note: "C#+", frets: [ -1, -1, 3, 2, 2, 1]},
-            {note: "D+", frets: [ -1, -1, 0, 3, 3, 2]},
-            {note: "Eb+", frets: [ -1, -1, 1, 0, 0, 3]},
-            {note: "E+", frets: [ -1, -1, 2, 1, 1, 0]},
-            {note: "F+", frets: [ -1, -1, 3, 2, 2, 1]},
-            {note: "F#+", frets: [ -1, -1, 4, 3, 3, 2]},
-            {note: "G+", frets: [ -1, -1, 1, 0, 0, 3]}
-        ],
-        suspended: [
-            {note: "Absus", frets: [ -1, -1, 1, 1, 2, 4]},
-            {note: "Asus", frets: [ -1, 0, 2, 2, 3, 0]},
-            {note: "Bbsus", frets: [ -1, -1, 3, 3, 4, 1]},
-            {note: "Bsus", frets: [ -1, -1, 3, 3, 4, 1], firstfret: "2"},
-            {note: "Csus", frets: [ -1, -1, 3, 0, 1, 3]},
-            {note: "C#sus", frets: [ -1, -1, 3, 3, 4, 1]},
-            {note: "Dsus", frets: [ -1, -1, 0, 2, 3, 3]},
-            {note: "Ebsus", frets: [ -1, -1, 1, 3, 4, 4]},
-            {note: "Esus", frets: [ 0, 2, 2, 2, 0, 0]},
-            {note: "Fsus", frets: [ -1, -1, 3, 3, 1, 1]},
-            {note: "F#sus", frets: [ -1, -1, 4, 4, 2, 2]},
-            {note: "Gsus", frets: [ -1, -1, 0, 0, 1, 3]}
-        ]
+        naturals: [{note: "Ab", frets: [ 1, 3, 3, 2, 1, 1], firstfret: "4"},{note: "A", frets: [ -1, 0, 2, 2, 2, 0]},{note: "Bb", frets: [ -1, 1, 3, 3, 3, 1]},{note: "B", frets: [ -1, 2, 4, 4, 4, 2]},{note: "C", frets: [ 3, 3, 2, 0, 1, 0]},{note: "C#", frets: [ -1, -1, 3, 1, 2, 1]},{note: "D", frets: [ -1, -1, 0, 2, 3, 2]},{note: "Eb", frets: [ 0, 0, 3, 1, 2, 1], firstfret: "3"},{note: "E", frets: [ 0, 2, 2, 1, 0, 0]},{note: "F", frets: [ 1, 3, 3, 2, 1, 1]},{note: "F#", frets: [ 2, 4, 4, 3, 2, 2]},{note: "G", frets: [ 3, 2, 0, 0, 0, 3]}],
+        minors: [{note: "Abm", frets: [ 1, 3, 3, 1, 1, 1], firstfret: "4"},{note: "Am", frets: [ -1, 0, 2, 2, 1, 0]},{note: "Bbm", frets: [ -1, 1, 3, 3, 2, 1]},{note: "Bm", frets: [ -1, 2, 4, 4, 3, 2]},{note: "Cm", frets: [ -1, 1, 3, 3, 2, 1], firstfret: "3"},{note: "C#m", frets: [ -1, -1, 2, 1, 2, 0]},{note: "Dm", frets: [ -1, -1, 0, 2, 3, 1]},{note: "Ebm", frets: [ -1, -1, 4, 3, 4, 2]},{note: "Em", frets: [ 0, 2, 2, 0, 0, 0]},{note: "Fm", frets: [ 1, 3, 3, 1, 1, 1]},{note: "F#m", frets: [ 2, 4, 4, 2, 2, 2]},{note: "Gm", frets: [ 1, 3, 3, 1, 1, 1], firstfret: "3"}],
+        sevenths: [{note: "Ab7", frets: [ -1, -1, 1, 1, 1, 2]},{note: "A7", frets: [ -1, 0, 2, 2, 2, 3]},{note: "Bb7", frets: [ -1, -1, 1, 1, 1, 2], firstfret: "3"},{note: "B7", frets: [ -1, 2, 1, 2, 0, 2]},{note: "C7", frets: [ -1, 3, 2, 3, 1, 0]},{note: "C#7", frets: [ -1, -1, 3, 4, 2, 4]},{note: "D7", frets: [ -1, -1, 0, 2, 1, 2]},{note: "Eb7", frets: [ -1, -1, 1, 3, 2, 3]},{note: "E7", frets: [ 0, 2, 2, 1, 3, 0]},{note: "F7", frets: [ 1, 3, 1, 2, 1, 1]},{note: "F#7", frets: [ -1, -1, 4, 3, 2, 0]},{note: "G7", frets: [ 3, 2, 0, 0, 0, 1]}],
+        majorseventh: [{note: "AbM7", frets: [ -1, -1, 1, 1, 1, 3]},{note: "AM7", frets: [ -1, 0, 2, 1, 2, 0]},{note: "BbM7", frets: [ -1, 1, 3, 2, 3, -1]},{note: "BM7", frets: [ -1, 2, 4, 3, 4, -1]},{note: "CM7", frets: [ -1, 3, 2, 0, 0, 0]},{note: "C#M7", frets: [ -1, 4, 3, 1, 1, 1]},{note: "DM7", frets: [ -1, -1, 0, 2, 2, 2]},{note: "EbM7", frets: [ -1, -1, 1, 3, 3, 3]},{note: "EM7", frets: [ 0, 2, 1, 1, 0, 0]},{note: "FM7", frets: [ -1, -1, 3, 2, 1, 0]},{note: "F#M7", frets: [ -1, -1, 4, 3, 2, 1]},{note: "GM7", frets: [ -1, -1, 4, 3, 2, 1], firstfret: 2}],
+        minorseventh: [{note: "Abm7", frets: [ -1, -1, 1, 1, 0, 2]},{note: "Am7", frets: [ -1, 0, 2, 2, 1, 3]},{note: "Bbm7", frets: [ -1, -1, 3, 3, 2, 4]},{note: "Bm7", frets: [ -1, 1, 3, 1, 2, 1], firstfret: 2},{note: "Cm7", frets: [ -1, -1, 1, 3, 1, 3]},{note: "C#m7", frets: [ -1, -1, 2, 4, 2, 4]},{note: "Dm7", frets: [ -1, -1, 0, 2, 1, 1]},{note: "Ebm7", frets: [ -1, -1, 1, 3, 2, 2]},{note: "Em7", frets: [ 0, 2, 0, 0, 0, 0]},{note: "Fm7", frets: [ 1, 3, 1, 1, 1, 1]},{note: "F#m7", frets: [ -1, -1, 2, 2, 2, 2]},{note: "Gm7", frets: [ 1, 3, 1, 1, 1, 1], firstfret: 3}],
+        diminished: [{note: "Abdim", frets: [ -1, -1, 0, 1, 0, 1]},{note: "Adim", frets: [ -1, -1, 1, 2, 1, 2]},{note: "Bbdim", frets: [ -1, -1, 2, 3, 2, 3]},{note: "Bdim", frets: [ -1, -1, 0, 1, 0, 1]},{note: "Cdim", frets: [ -1, -1, 1, 2, 1, 2]},{note: "C#dim", frets: [ -1, -1, 2, 3, 2, 3]},{note: "Ddim", frets: [ -1, -1, 0, 1, 0, 1]},{note: "Ebdim", frets: [ -1, -1, 1, 2, 1, 2]},{note: "Edim", frets: [ -1, -1, 2, 3, 2, 3]},{note: "Fdim", frets: [ -1, -1, 0, 1, 0, 1]},{note: "F#dim", frets: [ -1, -1, 1, 2, 1, 2]},{note: "Gdim", frets: [ -1, -1, 2, 3, 2, 3]}],
+        augmented: [{note: "Ab+", frets: [ -1, -1, 2, 1, 1, 0]},{note: "A+", frets: [ -1, 0, 3, 2, 2, 1]},{note: "Bb+", frets: [ -1, -1, 0, 3, 3, 2]},{note: "B+", frets: [ -1, -1, 3, 2, 2, 1], firstfret: "3"},{note: "C+", frets: [ -1, -1, 2, 1, 1, 0]},{note: "C#+", frets: [ -1, -1, 3, 2, 2, 1]},{note: "D+", frets: [ -1, -1, 0, 3, 3, 2]},{note: "Eb+", frets: [ -1, -1, 1, 0, 0, 3]},{note: "E+", frets: [ -1, -1, 2, 1, 1, 0]},{note: "F+", frets: [ -1, -1, 3, 2, 2, 1]},{note: "F#+", frets: [ -1, -1, 4, 3, 3, 2]},{note: "G+", frets: [ -1, -1, 1, 0, 0, 3]}],
+        suspended: [{note: "Absus", frets: [ -1, -1, 1, 1, 2, 4]},{note: "Asus", frets: [ -1, 0, 2, 2, 3, 0]},{note: "Bbsus", frets: [ -1, -1, 3, 3, 4, 1]},{note: "Bsus", frets: [ -1, -1, 3, 3, 4, 1], firstfret: "2"},{note: "Csus", frets: [ -1, -1, 3, 0, 1, 3]},{note: "C#sus", frets: [ -1, -1, 3, 3, 4, 1]},{note: "Dsus", frets: [ -1, -1, 0, 2, 3, 3]},{note: "Ebsus", frets: [ -1, -1, 1, 3, 4, 4]},{note: "Esus", frets: [ 0, 2, 2, 2, 0, 0]},{note: "Fsus", frets: [ -1, -1, 3, 3, 1, 1]},{note: "F#sus", frets: [ -1, -1, 4, 4, 2, 2]},{note: "Gsus", frets: [ -1, -1, 0, 0, 1, 3]}],
+        sixths: [{note: "Ab6", frets: [ 4, 3, 1, 1, 1, 1]},{note: "A6", frets: [ -1, 0, 2, 2, 2, 2]},{note: "Bb6", frets: [ 1, 1, 3, 3, 3, 3]},{note: "B6", frets: [ 2, 2, 4, 4, 4, 4]},{note: "C6", frets: [ -1, -1, 2, 2, 1, 3]},{note: "C#6", frets: [ -1, -1, 3, 3, 2, 4]},{note: "D6", frets: [ -1, 0, 0, 2, 0, 2]},{note: "Eb6", frets: [ -1, -1, 1, 3, 1, 3]},{note: "E6", frets: [ 0, 2, 2, 1, 2, 0]},{note: "F6", frets: [ -1, -1, 0, 2, 1, 1]},{note: "F#6", frets: [ -1, 4, 4, 3, 4, -1]},{note: "G6", frets: [ 3, 2, 0, 0, 0, 0]}],
+        ninths: [{note: "Ab9", frets: [ -1, -1, 1, 3, 1, 2]},{note: "A9", frets: [ -1, 0, 2, 4, 2, 3]},{note: "Bb9", frets: [ 1, 1, 3, 1, 1, 1], firstfret: "3"},{note: "B9", frets: [ -1, 2, 1, 2, 2, 2]},{note: "C9", frets: [ -1, 3, 2, 3, 3, 3]},{note: "C#9", frets: [ -1, 4, 3, 4, 4, 4]},{note: "D9", frets: [ 2, 0, 0, 2, 1, 0]},{note: "Eb9", frets: [ 1, 1, 1, 3, 2, 1]},{note: "E9", frets: [ 0, 2, 0, 1, 0, 2]},{note: "F9", frets: [ -1, -1, 3, 2, 4, 3]},{note: "F#9", frets: [ -1, -1, 2, 1, 4, 3], firstfret: "1"},{note: "G9", frets: [ 3, 0, 0, 2, 0, 1]}],
+        minorsixth: [{note: "Abm6", frets: [ -1, -1, -1, 4, 4, 4]},{note: "Am6", frets: [ -1, 0, 2, 2, 1, 2]},{note: "Bbm6", frets: [ -1, -1, 3, 3, 2, 3]},{note: "Bm6", frets: [ -1, -1, 4, 4, 3, 4]},{note: "Cm6", frets: [ -1, -1, 1, 2, 1, 3]},{note: "C#m6", frets: [ -1, -1, 2, 3, 2, 4]},{note: "Dm6", frets: [ -1, -1, 0, 2, 0, 1]},{note: "Ebm6", frets: [ -1, -1, 1, 3, 1, 2]},{note: "Em6", frets: [ 0, 2, 2, 0, 2, 0]},{note: "Fm6", frets: [ -1, -1, 0, 1, 1, 1]},{note: "F#m6", frets: [ -1, -1, 1, 2, 2, 2]},{note: "Gm6", frets: [ -1, -1, 2, 3, 3, 3]}]
     };
+
+    const roots = ["C", "D", "E", "F", "G", "A", "B"];
+    const accidentals = [ {l: "♮", v: ""}, {l: "♯", v: "#"}, {l: "♭", v: "b"} ];
+    
+    // Mapping the display labels to your object keys
+    const types = [
+        {l: "Maj", v: "naturals", suffix: ""}, 
+        {l: "Min", v: "minors", suffix: "m"},
+        {l: "7", v: "sevenths", suffix: "7"},
+        {l: "Maj7", v: "majorseventh", suffix: "M7"},
+        {l: "min7", v: "minorseventh", suffix: "m7"},
+        {l: "Dim", v: "diminished", suffix: "-"},
+        {l: "Aug", v: "augmented", suffix: "+"},
+        {l: "Sus", v: "suspended", suffix: "sus"},
+        {l: "6", v: "sixths", suffix: "6"},
+        {l: "9", v: "nineths", suffix: "9"},
+        {l: "min6", v: "minorsixth", suffix: "m6"}
+
+    ];
+
+    function initButtons() {
+        const rootRow = document.getElementById('root-row');
+        roots.forEach(r => {
+            const btn = document.createElement('button');
+            btn.className = 'option-btn';
+            btn.dataset.value = r;
+            btn.textContent = r;
+            if(r === "C") btn.classList.add('selected');
+            btn.onclick = (e) => select(e);
+            rootRow.appendChild(btn);
+        });
+
+        const accRow = document.getElementById('accidental-row');
+        accidentals.forEach(a => {
+            const btn = document.createElement('button');
+            btn.className = 'option-btn';
+            btn.dataset.value = a.v;
+            btn.textContent = a.l;
+            if(a.v === "") btn.classList.add('selected');
+            btn.onclick = (e) => select(e);
+            accRow.appendChild(btn);
+        });
+
+        const varRow = document.getElementById('variant-row');
+        types.forEach(t => {
+            const btn = document.createElement('button');
+            btn.className = 'option-btn';
+            btn.dataset.value = t.v;
+            btn.dataset.suffix = t.suffix;
+            btn.textContent = t.l;
+            if(t.v === "naturals") btn.classList.add('selected');
+            btn.onclick = (e) => select(e);
+            varRow.appendChild(btn);
+        });
+    }
+
+    function select(e) {
+        e.currentTarget.parentElement.querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
+        e.currentTarget.classList.add('selected');
+        drawChord();
+    }
 
     function toggleLayout() {
         const container = document.getElementById('app-container');
-        const btn = document.querySelector('.layout-toggle');
-        if (container.classList.contains('portrait-mode')) {
-            container.classList.replace('portrait-mode', 'stack-mode');
-            btn.textContent = 'Switch to Portrait Mode';
-        } else {
-            container.classList.replace('stack-mode', 'portrait-mode');
-            btn.textContent = 'Switch to Stack Mode';
-        }
-    }
-
-    function getKey() {
-        const note = document.querySelector("#root-row .selected").dataset.value;
-        const mod1 = document.querySelector("#type-row .selected").dataset.value;
-        const mod2 = document.querySelector("#variant-row .selected").dataset.value;
-        
-        let key = note + mod1;
-        const maps = {"A#":"Bb", "B#":"C", "Cb":"B", "Db":"C#", "D#":"Eb", "E#":"F", "Fb":"E", "Gb":"F#", "G#":"Ab"};
-        
-        const comment = document.querySelector("#comment");
-        if(maps[key]) {
-            comment.textContent = `(${key} = ${maps[key]})`;
-            key = maps[key];
-        } else {
-            comment.textContent = "";
-        }
-        return key + mod2;
+        container.classList.toggle('force-stack');
+        document.querySelector('.layout-toggle').textContent = 
+            container.classList.contains('force-stack') ? 'Switch to Sidebar' : 'Switch to Stack';
     }
 
     function drawChord() {
-        const key = getKey();
-        const all = Object.values(chords).flat();
-        const entry = all.find(c => c.note === key);
+        const note = document.querySelector("#root-row .selected").dataset.value;
+        const acc = document.querySelector("#accidental-row .selected").dataset.value;
+        const typeBtn = document.querySelector("#variant-row .selected");
+        const typeKey = typeBtn.dataset.value;
+        const suffix = typeBtn.dataset.suffix;
+        
+        let rootKey = note + acc;
+        // Enharmonic mapping
+        const maps = {"A#":"Bb", "B#":"C", "Cb":"B", "Db":"C#", "D#":"Eb", "E#":"F", "Fb":"E", "Gb":"F#", "G#":"Ab"};
+        if(maps[rootKey]) rootKey = maps[rootKey];
+
+        const targetFullNote = rootKey + suffix;
+        const entry = chords[typeKey]?.find(c => c.note === targetFullNote);
+
+        const noteDisplay = document.querySelector("#note-display");
+        const comment = document.querySelector("#comment");
 
         if (!entry) {
-            document.querySelector("#note-display").textContent = "?";
+            noteDisplay.textContent = targetFullNote + " ?";
+            comment.textContent = "Chord not found";
             return;
         }
 
-        document.querySelector("#note-display").textContent = entry.note;
-        
+        noteDisplay.textContent = entry.note;
+        comment.textContent = "";
+
+        // Update SVG
         const fret0 = document.querySelector("#fret0");
         const firstFretTxt = document.querySelector("#firstfret");
-        
         fret0.style.strokeWidth = entry.firstfret ? 1 : 4;
         firstFretTxt.textContent = entry.firstfret || "";
 
@@ -479,7 +323,6 @@
             op.textContent = val === -1 ? "x" : (val === 0 ? "o" : " ");
             
             if (val > 0) {
-                // Corrected Y coordinate: start fret line (35) + offset (val * 25) - 12 (centered in fret space)
                 const yPos = 35 + (val * 25) - 12.5;
                 dot.setAttribute("cy", yPos);
                 dot.style.visibility = "visible";
@@ -489,25 +332,10 @@
         }
     }
 
-    document.querySelectorAll('.option-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            e.currentTarget.parentElement.querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
-            e.currentTarget.classList.add('selected');
-            drawChord();
-        });
-    });
-
+    document.addEventListener('DOMContentLoaded', () => {
+    initButtons();
     drawChord();
-</script>
-<script>
-  // Force scroll to top on page load/refresh
-  window.onbeforeunload = function () {
-    window.scrollTo(0, 0);
-  };
-  
-  if ('scrollRestoration' in history) {
-    history.scrollRestoration = 'manual';
-    }
+});
 </script>
 </body>
 </html>
