@@ -8,9 +8,5 @@ These utilities show the finguring for a single chord, allowing selection of the
 
 
 The other files in this repository are:
-* [SongChords.html](SongChords.html) - an editor to not the chords of a song, and save them
+* [SongChords.html](SongChords.html) - an editor to note the chords of a song, and save them
 * [PlayGig.html](PlayGig.html) - a playback utily that takes the songs stored by SongChords.html and displays them for playing along
-
-
-Also check out
-* [[FamilyTreeEditor.html](FamilyTreeEditor.html)
