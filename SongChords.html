@@ -58,6 +58,11 @@
 <header>
     <h1><a href="./index.html" style="text-decoration: none; color: inherit;">Chord Sandbox</a></h1>
     <div style="font-size: 0.8rem; color: #888;">Personal Songbook Editor</div>
+    <div class="sync-controls">
+        <button onclick="exportData()" class="sync-btn" style="background: #607D8B; color:white; border:none; padding:5px 10px; border-radius:4px; cursor:pointer;">Export Backup</button>
+        <button onclick="document.getElementById('importFile').click()" class="sync-btn" style="background: #9C27B0; color:white; border:none; padding:5px 10px; border-radius:4px; cursor:pointer;">Import Backup</button>
+        <input type="file" id="importFile" style="display:none" onchange="importData(event)">
+    </div>
 </header>
 
 <div id="app-container">
@@ -118,6 +123,24 @@
             <h4>Song Library</h4>
             <button class="action-btn" onclick="saveSong()" style="background: var(--secondary); color: white; margin-bottom: 15px;">Save Current to Library</button>
             <div id="saved-songs-list"></div>
+        </div>
+
+        <div id="export-panel" style="margin-top: 20px; padding: 10px; border-top: 1px solid #ddd;">
+            <div id="export-actions">
+                <button onclick="toggleSelectionMode(true)" class="option-btn" style="background:#607D8B; width:100%;">Manage Library</button>
+            </div>
+            
+            <div id="selection-controls" style="display: none; flex-direction: column; gap: 10px;">
+                <div style="display: flex; gap: 5px;">
+                    <button onclick="setAllSelection(true)" class="option-btn" style="flex:1; padding:5px;">All</button>
+                    <button onclick="setAllSelection(false)" class="option-btn" style="flex:1; padding:5px;">None</button>
+                </div>
+                <div style="display: flex; gap: 5px;">
+                    <button onclick="exportSelected()" class="option-btn" style="flex:1; background:#2196F3; padding:5px;">Export</button>
+                    <button onclick="document.getElementById('importFile').click()" class="sync-btn" style="flex:1; background: #9C27B0; color:white; border:none; padding:5px 10px; border-radius:4px; cursor:pointer;">Import</button>
+                    <button onclick="toggleSelectionMode(false)" class="option-btn" style="flex:1; background:#f44336; padding:5px;">Cancel</button>
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -279,16 +302,19 @@
         renderSections();
     }
 
-    function loadSong(title) {
-        const saved = localStorage.getItem('chordSong_' + title);
-        if (saved) {
-            const pkg = JSON.parse(saved);
-            document.getElementById('song-title-input').value = pkg.title;
-            songData = pkg.data;
-            if (songData.length > 0) activeSectionId = songData[0].id;
-            renderSections();
-        }
+function loadSong(title) {
+    const saved = localStorage.getItem('chordSong_' + title);
+    if (saved) {
+        const pkg = JSON.parse(saved);
+        document.getElementById('song-title-input').value = pkg.title;
+        songData = pkg.data;
+        if (songData.length > 0) activeSectionId = songData[0].id;
+        
+        // Immediately persist this as the 'current' active song data
+        saveSong(); 
+        renderSections();
     }
+}
 
     function saveSong() {
         const title = document.getElementById('song-title-input').value.trim() || "Untitled Song";
@@ -305,20 +331,99 @@
         }
     }
 
-    function renderLibrary() {
-        const list = document.getElementById('saved-songs-list');
-        list.innerHTML = "";
-        Object.keys(localStorage).forEach(key => {
-            if (key.startsWith('chordSong_')) {
-                const title = key.replace('chordSong_', '');
-                const div = document.createElement('div');
-                div.className = 'saved-item';
-                div.innerHTML = `<span>${title}</span><span class="del-saved" onclick="deleteSaved('${title}', event)">×</span>`;
-                div.onclick = () => loadSong(title);
-                list.appendChild(div);
-            }
-        });
+let isSelectionMode = false;
+let selectedSongs = new Set();
+
+function renderLibrary() {
+    const list = document.getElementById('saved-songs-list');
+    list.innerHTML = "";
+
+    const titles = Object.keys(localStorage)
+        .filter(key => key.startsWith('chordSong_'))
+        .map(key => key.replace('chordSong_', ''));
+    if (titles.length === 0) {
+        list.innerHTML = "<div style='color:#888; padding:10px;'>No saved songs</div>";
+        return;
     }
+
+    titles.forEach(title => {
+        const item = document.createElement('div');
+        item.style = "display:flex; align-items:center; gap:10px; padding:8px; border-bottom:1px solid #eee; cursor:pointer;";
+        
+        if (isSelectionMode) {
+            const isChecked = selectedSongs.has(title);
+            item.style.background = isChecked ? "#e3f2fd" : "transparent";
+            item.innerHTML = `
+                <input type="checkbox" ${isChecked ? 'checked' : ''} style="pointer-events:none;">
+                <span style="flex-grow:1; font-size:0.9rem;">${title}</span>
+            `;
+            item.onclick = () => {
+                if (selectedSongs.has(title)) selectedSongs.delete(title);
+                else selectedSongs.add(title);
+                renderLibrary(); 
+            };
+        } else {
+            // Updated to call deleteSaved with both the title and the click event
+            item.innerHTML = `
+                <span style="flex-grow:1; font-size:0.9rem;" onclick="loadSong('${title}')">${title}</span>
+                <button onclick="deleteSaved('${title}', event)" style="color:#ff5252; border:none; background:none; cursor:pointer; font-size:1.2rem;">&times;</button>
+            `;
+        }
+        list.appendChild(item);
+    });
+}
+
+function toggleSelectionMode(active) {
+    isSelectionMode = active;
+    selectedSongs.clear();
+    document.getElementById('export-actions').style.display = active ? 'none' : 'block';
+    document.getElementById('selection-controls').style.display = active ? 'flex' : 'none';
+    renderLibrary();
+}
+
+function setAllSelection(status) {
+    if (status) {
+        Object.keys(localStorage)
+            .filter(key => key.startsWith('chordSong_'))
+            .map(key => key.replace('chordSong_', ''))
+            .forEach(t => selectedSongs.add(t));
+    } else {
+        selectedSongs.clear();
+    }
+    renderLibrary();
+}
+
+function exportSelected() {
+    // Collect the actual song objects into a flat array
+    const dataToExport = [];
+    
+    selectedSongs.forEach(title => {
+        const songRaw = localStorage.getItem('chordSong_' + title);
+        if (songRaw) {
+            dataToExport.push(JSON.parse(songRaw)); // Push the {title, data} object directly
+        }
+    });
+
+    if (dataToExport.length === 0) {
+        alert("Select at least one song.");
+        return;
+    }
+
+    // Export as a JSON array
+    const blob = new Blob([JSON.stringify(dataToExport, null, 2)], {type: 'application/json'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    
+    // Naming logic: use the song name if single, or "chord_backup" if multiple
+    const fileName = dataToExport.length === 1 
+        ? dataToExport[0].title.replace(/\s+/g, '_') 
+        : `chord_backup_${new Date().toISOString().slice(0,10)}`;
+        
+    a.download = `${fileName}.json`;
+    a.click();
+
+    toggleSelectionMode(false);
+}
 
     function updateSecTitle(id, val) { songData.find(s => s.id === id).title = val; }
     function deleteSection(id) { songData = songData.filter(s => s.id !== id); renderSections(); }
@@ -376,17 +481,147 @@
         a.click();
     }
 
-    /* --- 6. INIT --- */
-    document.querySelectorAll('.option-btn').forEach(btn => {
-        btn.onclick = (e) => {
-            e.currentTarget.parentElement.querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
-            e.currentTarget.classList.add('selected');
-            updatePreview();
-        };
-    });
-    renderLibrary();
+/* --- 6. INIT --- */
+
+// 1. Load data from localStorage first
+const saved = localStorage.getItem('guitar_chord_data');
+if (saved) {
+    songData = JSON.parse(saved);
+}
+
+// 2. ONLY add a default section if the song is empty
+if (songData.length === 0) {
     addNewSection("Verse 1");
-    updatePreview();
+}
+
+// 3. Render the UI
+renderLibrary();
+renderSections(); // Make sure your sections show up
+updatePreview();
+
+// 4. Keep your button click logic (updated to be more specific)
+document.querySelectorAll('.chord-library .option-btn').forEach(btn => {
+    btn.onclick = (e) => {
+        const parent = e.currentTarget.parentElement;
+        parent.querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
+        e.currentTarget.classList.add('selected');
+        updatePreview();
+    };
+});
+
+/* --- 7. SYNC LOGIC --- */
+
+// DOWNLOAD your data as a JSON file
+function exportData() {
+    const title = document.getElementById("song-title-input").value || "Song_Backup";
+    const dataStr = JSON.stringify({
+        title: title,
+        data: songData
+    }, null, 2);
+    
+    const blob = new Blob([dataStr], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = title.replace(/\s+/g, '_') + "_" + new Date().toISOString().slice(0,10) + ".json";
+    link.click();
+    
+    URL.revokeObjectURL(url);
+}
+
+// UPLOAD and overwrite current editor state with a JSON file
+function importData(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            const importedData = JSON.parse(e.target.result);
+            const songs = Array.isArray(importedData) ? importedData : [importedData];
+            
+            if (songs.length === 0 || !songs[0].data) {
+                alert("No valid song data found.");
+                return;
+            }
+
+            // Create a selection UI inside the sections container
+            const container = document.getElementById("sections-container");
+            container.innerHTML = `
+                <div id="batch-import-zone" style="background:#fff; border:2px solid var(--primary); padding:15px; border-radius:8px; margin-bottom:20px;">
+                    <h3 style="margin-top:0;">Select Songs to Import</h3>
+                    <div id="import-list" style="max-height:300px; overflow-y:auto; margin-bottom:15px; border:1px solid #eee;">
+                        ${songs.map((s, i) => `
+                            <div style="display:flex; align-items:center; gap:10px; padding:8px; border-bottom:1px solid #f0f0f0;">
+                                <input type="checkbox" id="import-chk-${i}" checked data-idx="${i}">
+                                <label for="import-chk-${i}" style="flex-grow:1; cursor:pointer;">${s.title || 'Untitled'}</label>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <div style="display:flex; gap:10px;">
+                        <button id="confirm-batch-btn" class="mini-btn" style="background:var(--secondary); color:white; flex:1; padding:10px;">Import Selected</button>
+                        <button id="cancel-batch-btn" class="mini-btn" style="background:#ccc; flex:1; padding:10px;">Cancel</button>
+                    </div>
+                </div>
+            `;
+
+            // Wire up the Batch Import button
+            document.getElementById('confirm-batch-btn').onclick = () => {
+                const selectedIndices = Array.from(document.querySelectorAll('#batch-import-zone input[type="checkbox"]:checked'))
+                    .map(cb => parseInt(cb.dataset.idx));
+
+                if (selectedIndices.length === 0) {
+                    alert("Please select at least one song.");
+                    return;
+                }
+
+                selectedIndices.forEach((idx, i) => {
+                    const song = songs[idx];
+                    // Save each to library
+                    localStorage.setItem('chordSong_' + song.title, JSON.stringify(song));
+                    
+                    // If it's the last one selected, make it the active song in the editor
+                    if (i === selectedIndices.length - 1) {
+                        songData = song.data;
+                        document.getElementById('song-title-input').value = song.title;
+                        if (songData.length > 0) activeSectionId = songData[0].id;
+                    }
+                });
+
+                alert(`Successfully imported ${selectedIndices.length} song(s).`);
+                renderLibrary();
+                renderSections();
+            };
+
+            document.getElementById('cancel-batch-btn').onclick = () => renderSections();
+
+        } catch (err) {
+            alert("Error parsing JSON: " + err.message);
+        }
+        event.target.value = ''; 
+    };
+    reader.readAsText(file);
+}
+
+/* --- 8. REVISED INITIALIZATION --- */
+// Handle button selection styling
+document.querySelectorAll('.root-grid .option-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+        const parent = e.currentTarget.parentElement;
+        parent.querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
+        e.currentTarget.classList.add('selected');
+        updatePreview();
+    });
+});
+
+// Initialize the app state
+if (songData.length === 0) {
+    addNewSection("Verse 1");
+}
+renderLibrary();
+renderSections();
+updatePreview();
 </script>
 </body>
 </html>
