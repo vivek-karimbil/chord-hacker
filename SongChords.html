@@ -225,7 +225,7 @@
             div.onclick = () => { activeSectionId = sec.id; renderSections(); };
             
             let html = "<div class='section-header'>";
-            html += "<input type='text' class='section-title' value='" + sec.title + "' oninput='updateSecTitle(" + sec.id + ", this.value)'>";
+            html += "<input type='text' class='section-title' value='" + sec.title + "' onclick='event.stopPropagation()' oninput='updateSecTitle(" + sec.id + ", this.value)'>";
             html += "<button class='mini-btn' onclick='event.stopPropagation(); deleteSection(" + sec.id + ")'>x</button>";
             html += "</div><div class='chord-list'>";
             
