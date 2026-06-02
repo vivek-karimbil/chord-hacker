@@ -1,8 +1,10 @@
-These utilities were written to help me in my way to long journey to make music on my guitar. I do come across songs with chords I do not recognise often, and this gives me a way to carry them arround with a quick look at the fingering needed for the chords.
+These utilities were written to help me in my way to long journey to make music on my guitar. I do come across songs with chords I do not recognise often, and this gives me a way to carry them arround with a quick look at the fingering needed for the chords. Now that I have access to a Ukelel only for a while, I added support for that.
 
 The files here are:
 * [Guitar Chords.html](Guitar%20Chords.html)
 * [Guitar Detailed Chords.html](Guitar%20Detailed%20Chords.html)
+* [Ukelele Chords.html](Ukelele%20Chords.html)
+* [Ukelele Detailed Chords.html](Ukelele%20Detailed%20Chords.html)
 
 These utilities show the finguring for a single chord, allowing selection of the note, the sharp/flat/natural, and the major/minor/.... other variants
 
